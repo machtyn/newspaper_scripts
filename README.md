@@ -6,6 +6,65 @@ A collection of Python scripts for batch processing newspaper digitization files
 
 These scripts are designed to handle common tasks in newspaper archival workflows, including image enhancement, compression, format conversion, and batch file organization.
 
+## Installation & Setup
+
+### Prerequisites
+
+- Python 3.7 or higher
+- pip3 (Python package manager)
+- ImageMagick (for image processing scripts)
+
+### Step 1: Install Python Dependencies
+
+Clone or download this repository, then install the required Python packages:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+This will install:
+- **Pillow** - Image processing library
+- **tqdm** - Progress bar library
+
+### Step 2: Install ImageMagick
+
+Some scripts require ImageMagick's `magick` command-line tool. Install it for your operating system:
+
+#### Windows
+1. Download the installer from [imagemagick.org](https://imagemagick.org/script/download.php)
+2. Run the installer and ensure "Add ImageMagick to system PATH" is checked
+3. Verify installation by opening a terminal and running:
+   ```bash
+   magick --version
+   ```
+
+#### macOS
+```bash
+brew install imagemagick
+```
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get install imagemagick
+```
+
+#### Linux (Fedora/RHEL)
+```bash
+sudo dnf install ImageMagick
+```
+
+### Step 3: Verify Installation
+
+Test that all dependencies are properly installed:
+
+```bash
+# Check Python version
+python3 --version
+
+# Check ImageMagick installation
+magick --version
+```
+
 ## Scripts
 
 ### 1. **combineTiff2PDF.py**
@@ -20,7 +79,7 @@ Converts directories containing TIFF images into single PDF files.
 
 **Usage:**
 ```bash
-python combineTiff2PDF.py
+python3 combineTiff2PDF.py
 # Prompts for root directory path
 ```
 
@@ -45,7 +104,7 @@ Applies image enhancements and LZW compression to TIFF files using ImageMagick.
 
 **Usage:**
 ```bash
-python compressTiffLZW.py
+python3 compressTiffLZW.py
 # Prompts for core count and directory path
 ```
 
@@ -67,7 +126,7 @@ Converts color TIFF images to grayscale while preserving DPI information.
 
 **Usage:**
 ```bash
-python grayscale.py
+python3 grayscale.py
 # Prompts for Color root directory path
 # Creates Grayscale directory at same parent level
 ```
@@ -88,7 +147,7 @@ Removes "Roll ####" prefixes from PDF filenames.
 
 **Usage:**
 ```bash
-python removeRoll#.py --target_dir C:\path\to\files
+python3 removeRoll#.py --target_dir C:\path\to\files
 # Or without arguments for interactive prompt
 ```
 
@@ -108,7 +167,7 @@ Batch renames TIFF files by replacing date strings in filenames.
 
 **Usage:**
 ```bash
-python renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
+python3 renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
 # Or with partial/no arguments for interactive prompts
 ```
 
@@ -130,8 +189,8 @@ Performs double-pass sequential renumbering of files in folders.
 
 **Usage:**
 ```bash
-python renumberFiles.py -d C:\path\to\files
-# Or: python renumberFiles.py --source_dir C:\path\to\files
+python3 renumberFiles.py -d C:\path\to\files
+# Or: python3 renumberFiles.py --source_dir C:\path\to\files
 # Interactive prompt if directory not provided
 ```
 
@@ -152,8 +211,8 @@ Resizes TIFF images to target dimensions with padding and aspect ratio preservat
 
 **Usage:**
 ```bash
-python resizeTiff.py -d C:\path\to\tiff\files
-# Or: python resizeTiff.py --directory C:\path\to\tiff\files
+python3 resizeTiff.py -d C:\path\to\tiff\files
+# Or: python3 resizeTiff.py --directory C:\path\to\tiff\files
 # Interactive prompt if directory not provided
 ```
 
@@ -174,7 +233,7 @@ Splits multi-page TIFF files into individual pages using ImageMagick.
 
 **Usage:**
 ```bash
-python splitTiff.py
+python3 splitTiff.py
 # Prompts for starting directory path
 ```
 
@@ -194,7 +253,7 @@ Test script that applies image enhancements and LZW compression to TIFF files.
 
 **Usage:**
 ```bash
-python test_magick.py
+python3 test_magick.py
 # Prompts for directory (or press Enter for default)
 ```
 
@@ -209,18 +268,6 @@ python test_magick.py
 - **ImageMagick**: Command-line image manipulation (compressTiffLZW.py, splitTiff.py, test_magick.py)
   - Ensure `magick` command is in system PATH
   - Windows: Download from [ImageMagick.org](https://imagemagick.org)
-
-## Installation
-
-### Python Packages
-```bash
-pip install Pillow tqdm
-```
-
-### ImageMagick
-- **Windows**: Download installer from [imagemagick.org](https://imagemagick.org/script/download.php)
-- **macOS**: `brew install imagemagick`
-- **Linux**: `apt-get install imagemagick` (Ubuntu/Debian)
 
 ## Typical Workflow
 
