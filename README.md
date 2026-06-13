@@ -87,33 +87,6 @@ python3 combineTiff2PDF.py
 
 ---
 
-### 2. **compressTiffLZW.py**
-Applies image enhancements and LZW compression to TIFF files using ImageMagick.
-
-**Features:**
-- Multi-core parallel processing
-- Automatic image enhancements:
-  - Devignetting (removes vignette effect)
-  - Brightness and saturation adjustment (85,115,100)
-  - Sigmoidal contrast enhancement (30%)
-  - Sharpening
-  - Level adjustment for GIMP-compatible output
-- LZW compression
-- In-place file modification (overwrites originals)
-- Configurable core usage (3 or 6 cores)
-
-**Usage:**
-```bash
-python3 compressTiffLZW.py
-# Prompts for core count and directory path
-```
-
-**Dependencies:** ImageMagick (magick command), tqdm, concurrent.futures
-
-**Warning:** This script modifies original files. Requires user confirmation.
-
----
-
 ### 3. **grayscale.py**
 Converts color TIFF images to grayscale while preserving DPI information.
 
@@ -241,11 +214,10 @@ python3 splitTiff.py
 
 ---
 
-### 9. **test_magick.py**
-Test script that applies image enhancements and LZW compression to TIFF files.
+### 9. **magickTiff.py**
+Applies image enhancements and LZW compression to TIFF files.
 
 **Features:**
-- Similar enhancements to compressTiffLZW.py
 - Creates new `.new.tiff` files (non-destructive)
 - Preserves original files
 - Progress tracking with tqdm
@@ -253,7 +225,7 @@ Test script that applies image enhancements and LZW compression to TIFF files.
 
 **Usage:**
 ```bash
-python3 test_magick.py
+python3 magickTiff.py
 # Prompts for directory (or press Enter for default)
 ```
 
