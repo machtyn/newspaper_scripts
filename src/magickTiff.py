@@ -68,17 +68,22 @@ def process_and_compress_tiffs(target_directory):
             # Construct the full 'magick' command
             command = [
                 'magick',
-                file_path,                               # 1. Input file (Original)
-                '(', '+clone', '-vignette', '0x600-0+0', '-negate', ')', # 2. Devignette stack
-                '-compose', 'Multiply', '-composite',     # 3. Composite for devignette
-                '-modulate', '85,115,100',               # 4. Brightness 85, Saturation 115
-                '-sigmoidal-contrast', '5,30%',           # 5. Contrast 30
-                '-sharpen', '0x3.0',                      # 6. Sharpening 30
-                '-level', '35%,100%,0.60',                # 7. GIMP Input Levels
-                '-compress', 'lzw',                      # 8. LZW Compression
-                new_file_path                            # 9. Output file (New .new.tiff file)
+                file_path,                               # 1. Input file
+                # --- STEP 1: CONTINUOUS LEVEL MAPPING ---
+                # Clips the paper background smoothly to white while protecting photo midtones
+                '-level', '14%,90%,0.95', 
+                # --- STEP 2: WHITE MARGIN CLEANUP ---
+                # Safely forces the absolute brightest 0.5% of pixels (the margins) to pure white
+                '-contrast-stretch', '0.5%x0.5%', 
+                # --- STEP 3: TEXT SHARPENING ---
+                # Tends to text crispness without introducing edge artifacts in photos
+                '-unsharp', '0x1.2+1.2+0.03', 
+                # --- STEP 4: OUTPUT COMPRESSION ---
+                '-strip',                                # Removes heavy scanner profiles/hidden metadata
+                '-compress', 'lzw',                      
+                new_file_path                            # Output file
             ]
-            
+
             try:
                 # Execute the complex 'magick' command
                 subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
