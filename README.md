@@ -85,6 +85,8 @@ python3 src/combineTiff2PDF.py
 # Prompts for root directory path
 ```
 
+**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+
 **Dependencies:** Pillow (PIL), tqdm
 
 ---
@@ -106,6 +108,8 @@ python3 src/grayscale.py
 # Creates Grayscale directory at same parent level
 ```
 
+**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+
 **Dependencies:** Pillow (PIL), tqdm
 
 ---
@@ -122,9 +126,15 @@ Removes "Roll ####" prefixes from PDF filenames.
 
 **Usage:**
 ```bash
+# With command-line argument:
 python3 src/removeRoll#.py --target_dir C:\path\to\files
-# Or without arguments for interactive prompt
+
+# Or without arguments for interactive prompt:
+python3 src/removeRoll#.py
 ```
+
+**Command-line Arguments:**
+- `--target_dir <path>` - The root directory to search for PDF files to rename
 
 **Dependencies:** argparse, os, re
 
@@ -142,9 +152,21 @@ Batch renames TIFF files by replacing date strings in filenames.
 
 **Usage:**
 ```bash
-python3 src/renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
-# Or with partial/no arguments for interactive prompts
+# With all arguments:
+python3 src/renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path\to\files
+
+# With partial arguments (prompts for missing ones):
+python3 src/renameDate.py -old_date 20250520 -new_date 20250523
+python3 src/renameDate.py -directory C:\path\to\files
+
+# Display help:
+python3 src/renameDate.py -h
 ```
+
+**Command-line Arguments:**
+- `-old_date <date>` - The date string to find and replace (format: YYYYMMDD, e.g., 20250520)
+- `-new_date <date>` - The replacement date string (format: YYYYMMDD, e.g., 20250523)
+- `-directory <path>` - The target directory containing files to rename
 
 **Dependencies:** argparse, os, re
 
@@ -164,10 +186,19 @@ Performs double-pass sequential renumbering of files in folders.
 
 **Usage:**
 ```bash
+# With command-line argument:
 python3 src/renumberFiles.py -d C:\path\to\files
-# Or: python3 src/renumberFiles.py --source_dir C:\path\to\files
-# Interactive prompt if directory not provided
+python3 src/renumberFiles.py --source_dir C:\path\to\files
+
+# Or without arguments for interactive prompt:
+python3 src/renumberFiles.py
+
+# Display help:
+python3 src/renumberFiles.py -h
 ```
+
+**Command-line Arguments:**
+- `-d <path>` or `--source_dir <path>` - The directory containing files to renumber
 
 **Dependencies:** argparse, os, re
 
@@ -186,10 +217,19 @@ Resizes TIFF images to target dimensions with padding and aspect ratio preservat
 
 **Usage:**
 ```bash
+# With command-line argument:
 python3 src/resizeTiff.py -d C:\path\to\tiff\files
-# Or: python3 src/resizeTiff.py --directory C:\path\to\tiff\files
-# Interactive prompt if directory not provided
+python3 src/resizeTiff.py --directory C:\path\to\tiff\files
+
+# Or without arguments for interactive prompt:
+python3 src/resizeTiff.py
+
+# Display help:
+python3 src/resizeTiff.py -h
 ```
+
+**Command-line Arguments:**
+- `-d <path>` or `--directory <path>` - The directory containing TIFF images to resize
 
 **Dependencies:** Pillow (PIL), argparse, concurrent.futures, tqdm
 
@@ -211,6 +251,8 @@ Splits multi-page TIFF files into individual pages using ImageMagick.
 python3 src/splitTiff.py
 # Prompts for starting directory path
 ```
+
+**Notes:** This script uses interactive prompts and does not accept command-line arguments.
 
 **Dependencies:** ImageMagick (magick command), os, re, subprocess, shutil
 
@@ -234,6 +276,8 @@ Applies sophisticated image enhancements and LZW compression to TIFF files.
 python3 src/magickTiff.py
 # Prompts for directory (or press Enter for default)
 ```
+
+**Notes:** This script uses interactive prompts and does not accept command-line arguments.
 
 **Dependencies:** ImageMagick (magick command), tqdm, subprocess, shutil
 
@@ -264,6 +308,7 @@ python3 src/magickTiff.py
 - Progress bars are shown for long-running operations
 - ImageMagick-dependent scripts require the `magick` command in PATH
 - All scripts are located in the `src/` directory
+- Scripts with command-line arguments support `-h` or `--help` for detailed usage information
 
 ## Author Notes
 
