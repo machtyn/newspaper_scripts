@@ -1,315 +1,255 @@
 # newspaper_scripts
 
-A collection of Python scripts for batch processing newspaper digitization files, primarily focused on TIFF image manipulation, file renaming, and PDF generation.
+A collection of Python scripts for batch processing newspaper digitization files, primarily focused on TIFF image manipulation, sequential file renaming, and archival PDF generation.
 
 ## Project Overview
 
-These scripts are designed to handle common tasks in newspaper archival workflows, including image enhancement, compression, format conversion, and batch file organization.
+These scripts are engineered to automate and optimize common tasks in high-volume newspaper archival and digitization workflows (specifically tailored for the Georgetown News Graphic project). The portfolio addresses image enhancement, compression, multi-core resizing, split workflows, and collision-free reindexing.
 
 ## Installation & Setup
 
 ### Prerequisites
 
-- Python 3.7 or higher
-- pip3 (Python package manager)
-- ImageMagick (for image processing scripts)
+- **Python 3.7+**
+- **pip3** (Python package manager)
+- **ImageMagick** (Required for command-line image enhancement and layout splitting)
 
 ### Step 1: Install Python Dependencies
 
-Clone or download this repository, then install the required Python packages:
+Clone or download this repository, navigate to the root directory, and install the required Python packages from the ecosystem manifest:
 
 ```bash
 pip3 install -r requirements.txt
-```
 
-This will install:
-- **Pillow** - Image processing library
-- **tqdm** - Progress bar library
+This ensures the availability of:
 
-### Step 2: Install ImageMagick
+    Pillow (PIL) >=10.0.0 — Core pixel and metadata adjustments.
 
-Some scripts require ImageMagick's `magick` command-line tool. Install it for your operating system:
+    tqdm >=4.65.0 — Visual progress indicators for long-running batches.
 
-#### Windows
-1. Download the installer from [imagemagick.org](https://imagemagick.org/script/download.php)
-2. Run the installer and ensure "Add ImageMagick to system PATH" is checked
-3. Verify installation by opening a terminal and running:
-   ```bash
-   magick --version
-   ```
+Step 2: Install ImageMagick
 
-#### macOS
-```bash
+Scripts utilizing external binary executions require ImageMagick's magick tool.
+Windows
+
+    Download the executable installer from imagemagick.org.
+
+    Run the installer and verify that "Add ImageMagick to system PATH" is explicitly checked.
+
+    Verify global accessibility by opening a fresh command prompt and executing:
+    DOS
+
+    magick --version
+
+macOS
+Bash
+
 brew install imagemagick
-```
 
-#### Linux (Ubuntu/Debian)
-```bash
+Linux (Ubuntu/Debian)
+Bash
+
 sudo apt-get install imagemagick
-```
 
-#### Linux (Fedora/RHEL)
-```bash
-sudo dnf install ImageMagick
-```
+Unified Command Line Parameter Schema
 
-### Step 3: Verify Installation
+To provide a seamless operational experience across the portfolio, all script entry points have been standardized around a rigid flag naming layout:
 
-Test that all dependencies are properly installed:
+    -s, --source_directory : Denotes the input target directory tree containing the raw source files.
 
-```bash
-# Check Python version
-python3 --version
+    -d, --destination_directory : Denotes the output target path where transformed assets will be safely generated.
 
-# Check ImageMagick installation
-magick --version
-```
+If a mandatory path parameter is omitted when executing a script via the command line, the execution layer will smoothly fall back to an interactive user console prompt, or gracefully apply your hardcoded default backup path (D:\Georgetown_News_Graphic\Working_Folder).
+Core Tool Belt Reference
+1. renumberFiles.py
 
-## Scripts
+Performs a strict, collision-free numerical indexing run to re-sequence page sets sequentially from 0001 to X.
 
-All scripts are located in the `src/` directory.
+    Key Features:
 
-### 1. **combineTiff2PDF.py**
-Converts directories containing TIFF images into single PDF files.
+        Double-Pass Logic: Pass 1 maps files into an intermediate 8xxx buffer; Pass 2 cleans and down-steps indices to their final 0xxx production schema. This completely eliminates filename collisions.
 
-**Features:**
-- Scans subdirectories recursively for TIFF files
-- Creates one PDF per subdirectory
-- Preserves original DPI/PPI information
-- Dual progress bars (directory and file-level)
-- Converts images to RGB format for PDF compatibility
+        Explicitly requires a strict whitespace separator before the 4-digit token, bypassing malformed strings to maintain project uniformity.
 
-**Usage:**
-```bash
-python3 src/combineTiff2PDF.py
-# Prompts for root directory path
-```
+    CLI Syntax & Usage:
+    Bash
 
-**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+    python3 src/renumberFiles.py -s /path/to/raw_working_folder
 
-**Dependencies:** Pillow (PIL), tqdm
+2. resizeTiff.py
 
----
+Resizes asymmetric newspaper image arrays to fixed core canvas bounds using true CPU-bound parallelism.
 
-### 2. **grayscale.py**
-Converts color TIFF images to grayscale while preserving DPI information.
+    Key Features:
 
-**Features:**
-- Recursively processes color TIFF files
-- Maintains original DPI/PPI values
-- Creates parallel directory structure (Color → Grayscale)
-- Progress tracking with tqdm
-- Handles errors gracefully
+        Leverages ProcessPoolExecutor utilizing os.cpu_count() - 2 threads to maximize processing throughput.
 
-**Usage:**
-```bash
-python3 src/grayscale.py
-# Prompts for Color root directory path
-# Creates Grayscale directory at same parent level
-```
+        Preserves aspect ratio using premium LANCZOS filtration before centering onto a white padded background.
 
-**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+        Targets standard dimensions: 3300 x 6600 pixels.
 
-**Dependencies:** Pillow (PIL), tqdm
+        Safety Shield: Requires explicit user keyword affirmation (yes) if running without a destination flag to prevent accidental in-place asset overwrites.
 
----
+    CLI Syntax & Usage:
+    Bash
 
-### 3. **removeRoll#.py**
-Removes "Roll ####" prefixes from PDF filenames.
+    python3 src/resizeTiff.py -s /path/to/source -d /path/to/output_padded
 
-**Features:**
-- Regex pattern matching for "Roll #### SCPL yyyyMMdd.pdf" format
-- Recursive directory traversal
-- Conflict detection (prevents overwriting existing files)
-- Detailed logging of all operations
-- Command-line argument support
+3. magickTiff.py
 
-**Usage:**
-```bash
-# With command-line argument:
-python3 src/removeRoll#.py --target_dir C:\path\to\files
+Executes batch background white normalization, sharpening matrices, and curve level balances on archival text, wrapping results in LZW compression.
 
-# Or without arguments for interactive prompt:
-python3 src/removeRoll#.py
-```
+    Key Features:
 
-**Command-line Arguments:**
-- `--target_dir <path>` - The root directory to search for PDF files to rename
+        Omitted -accelerate rendering parameters to prevent crashes on Windows environments.
 
-**Dependencies:** argparse, os, re
+        Redirects image processor noise streams away from active tqdm timeline updates.
 
----
+        -t/--test execution flag writes safely to temporary .new.tiff spaces to preview layout calibrations.
 
-### 4. **renameDate.py**
-Batch renames TIFF files by replacing date strings in filenames.
+    CLI Syntax & Usage:
+    Bash
 
-**Features:**
-- Targets files matching "Roll 0001 SCPL*.tif" pattern
-- Replaces old date with new date (YYYYMMDD format)
-- Command-line argument support
-- Interactive fallback for missing arguments
-- Prevents accidental file overwrites
-
-**Usage:**
-```bash
-# With all arguments:
-python3 src/renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path\to\files
+    python3 src/magickTiff.py -s /path/to/source -d /path/to/destination
 
-# With partial arguments (prompts for missing ones):
-python3 src/renameDate.py -old_date 20250520 -new_date 20250523
-python3 src/renameDate.py -directory C:\path\to\files
+4. grayscale.py
 
-# Display help:
-python3 src/renameDate.py -h
-```
+Converts color TIFF images to 8-bit grayscale layouts while strictly safeguarding underlying image metrics.
 
-**Command-line Arguments:**
-- `-old_date <date>` - The date string to find and replace (format: YYYYMMDD, e.g., 20250520)
-- `-new_date <date>` - The replacement date string (format: YYYYMMDD, e.g., 20250523)
-- `-directory <path>` - The target directory containing files to rename
-
-**Dependencies:** argparse, os, re
-
----
-
-### 5. **renumberFiles.py**
-Performs double-pass sequential renumbering of files in folders.
-
-**Features:**
-- Two-pass renaming system:
-  - Pass 1: Renames to temporary 8xxx format (prevents conflicts)
-  - Pass 2: Renames to final 0001-to-X format
-- Recursive directory traversal
-- Reverse-order numbering logic
-- Comprehensive logging and progress tracking
-- Command-line argument support
+    Key Features:
 
-**Usage:**
-```bash
-# With command-line argument:
-python3 src/renumberFiles.py -d C:\path\to\files
-python3 src/renumberFiles.py --source_dir C:\path\to\files
+        Preserves original source DPI/PPI image header fields.
 
-# Or without arguments for interactive prompt:
-python3 src/renumberFiles.py
+        Replicates complex nested directory trees cleanly from a Color root to a parallel Grayscale node.
 
-# Display help:
-python3 src/renumberFiles.py -h
-```
+    CLI Syntax & Usage:
+    Bash
 
-**Command-line Arguments:**
-- `-d <path>` or `--source_dir <path>` - The directory containing files to renumber
-
-**Dependencies:** argparse, os, re
+    python3 src/grayscale.py -s /path/to/source -d /path/to/destination
 
----
+5. combineTiff2PDF.py
 
-### 6. **resizeTiff.py**
-Resizes TIFF images to target dimensions with padding and aspect ratio preservation.
+Consolidates organized collections of independent, sequentially ordered TIFF pages into single document deliverable PDFs.
 
-**Features:**
-- Parallel batch processing (uses CPU count - 2 cores)
-- Target dimensions: 3300 x 6600 pixels (customizable)
-- Maintains aspect ratio
-- Adds white background padding as needed
-- Preserves original DPI information
-- Progress tracking with tqdm
+    Key Features:
 
-**Usage:**
-```bash
-# With command-line argument:
-python3 src/resizeTiff.py -d C:\path\to\tiff\files
-python3 src/resizeTiff.py --directory C:\path\to\tiff\files
+        Maps nested issue paths to generate one unified PDF per subdirectory node.
 
-# Or without arguments for interactive prompt:
-python3 src/resizeTiff.py
+        Dual-layer tqdm monitoring displays active folder-by-folder progress alongside localized image processing stacks.
 
-# Display help:
-python3 src/resizeTiff.py -h
-```
+        Implements explicit image descriptor resource closing commands to completely prevent out-of-memory crashes on large volumes.
 
-**Command-line Arguments:**
-- `-d <path>` or `--directory <path>` - The directory containing TIFF images to resize
+    CLI Syntax & Usage:
+    Bash
 
-**Dependencies:** Pillow (PIL), argparse, concurrent.futures, tqdm
+    python3 src/combineTiff2PDF.py -s /path/to/source -d /path/to/destination
 
----
+6. splitTiff.py
 
-### 7. **splitTiff.py**
-Splits multi-page TIFF files into individual pages using ImageMagick.
+Parses incoming multi-page TIFF layers, splits them into individual pages via ImageMagick, converts raw hyphenated dates to clean numerical structures, and archives originals securely.
 
-**Features:**
-- Parses files matching "SCPL yyyy-MM-dd.tiff" pattern
-- Converts multi-page TIFFs to individual pages
-- Renames output pages as "Roll 0001 SCPL yyyyMMdd %04d.tif"
-- Sets DPI to 300 (configurable via command)
-- Creates "MultiTiff" subdirectory for archived originals
-- Detailed command and error logging
+    Key Features:
 
-**Usage:**
-```bash
-python3 src/splitTiff.py
-# Prompts for starting directory path
-```
+        Strict regex validation matching SCPL yyyy-MM-dd.tiff layouts.
 
-**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+        Auto-formats output strings into standard archival nomenclature: Roll 0001 SCPL yyyyMMdd %04d.tif.
 
-**Dependencies:** ImageMagick (magick command), os, re, subprocess, shutil
+        Isolates multi-page source files into a dedicated MultiTiff subfolder to preserve raw context.
 
----
+    CLI Syntax & Usage:
+    Bash
 
-### 8. **magickTiff.py**
-Applies sophisticated image enhancements and LZW compression to TIFF files.
+    python3 src/splitTiff.py -s /path/to/raw/tiffs
 
-**Features:**
-- Creates new `.new.tiff` files (non-destructive)
-- Preserves original files
-- Applies continuous level mapping for smooth background-to-white clipping
-- White margin cleanup for absolute brightness values
-- Text sharpening using unsharp masking
-- LZW compression for efficient file storage
-- Progress tracking with tqdm
-- User confirmation before processing
+7. removeRoll#.py (Optional)
 
-**Usage:**
-```bash
-python3 src/magickTiff.py
-# Prompts for directory (or press Enter for default)
-```
+Recursively strips out legacy or operational tape roll headers from final compiled document files before publishing.
 
-**Notes:** This script uses interactive prompts and does not accept command-line arguments.
+    Key Features:
 
-**Dependencies:** ImageMagick (magick command), tqdm, subprocess, shutil
+        Target regex filters match Roll #### SCPL yyyyMMdd.pdf structures.
 
----
+        Safe name-clash checking flags and skips files if a shortened target filename is already occupied on disk.
 
-## Common Dependencies
+    CLI Syntax & Usage:
+    Bash
 
-- **Pillow (PIL)**: Image processing (grayscale.py, combineTiff2PDF.py, resizeTiff.py)
-- **tqdm**: Progress bars (all scripts)
-- **ImageMagick**: Command-line image manipulation (splitTiff.py, magickTiff.py)
-  - Ensure `magick` command is in system PATH
-  - Windows: Download from [ImageMagick.org](https://imagemagick.org)
+    python3 src/removeRoll#.py -s /path/to/final_pdfs
 
-## Typical Workflow
+8. renameDate.py
 
-1. **Input**: Original color TIFF files
-2. **grayscale.py**: Convert to grayscale
-3. **magickTiff.py**: Enhance and compress
-4. **splitTiff.py**: Split multi-page TIFFs if needed
-5. **renumberFiles.py**: Ensure sequential numbering
-6. **combineTiff2PDF.py**: Generate PDFs from TIFF collections
+An administrative file-matching maintenance utility used to quickly find and alter specific historical date indexing parameters.
 
-## Notes
+    Key Features:
 
-- Most scripts support recursive directory traversal
-- Many provide interactive prompts as fallback to command-line arguments
-- File overwrite protection is implemented where appropriate
-- Progress bars are shown for long-running operations
-- ImageMagick-dependent scripts require the `magick` command in PATH
-- All scripts are located in the `src/` directory
-- Scripts with command-line arguments support `-h` or `--help` for detailed usage information
+        Validates prefix boundaries against standard archival schemas (Roll 0001 SCPL).
 
-## Author Notes
+        Seamlessly swaps target date strings without touching surrounding volume indices or page numbering fields.
 
-These scripts are optimized for the Georgetown News Graphic project workflow and handle newspaper digitization files. Adjust default directories and parameters as needed for your use case.
+    CLI Syntax & Usage:
+    Bash
+
+    python3 src/renameDate.py -s /path/to/target_directory --old_date 20260520 --new_date 20260523
+
+Typical Production Workflow
+
+For standard archival batches, run the scripts sequentially in this exact order to manage your transformations and preserve data nodes:
+Plaintext
+
+  [1. renumberFiles.py]   ---> Resolves file index sequences securely from 0001 to X first.
+         │
+         ▼
+  [2. resizeTiff.py]      ---> Standardizes files to a uniform 3300x6600 canvas using parallel cores.
+         │
+         ▼
+  [3. magickTiff.py]      ---> Pass 1: Run image enhancements. Save outputs to 'Roll0001-magicked'.
+         │
+         ├──► [5. grayscale.py] ---> Transforms the 'Roll0001-magicked' files to standard 
+         │                           archival grayscale. Save to 'Roll0001-grayscale'.
+         ▼
+  [4. magickTiff.py]      ---> Pass 2: Run a second pass on the magicked files for secondary 
+         │                           tuning/checks. Save outputs to 'Roll0001-compressed'.
+         ▼
+  [6. combineTiff2PDF.py] ---> Packages the final 'Roll0001-compressed' subfolders into final publication 
+                              PDFs. Save results to 'SCPL GEORGETOWN NEWS GRAPHIC MMMYYYY - MMMYYYY'.
+
+Detailed Pipeline Execution Reference
+
+    renumberFiles.py Run this first on your raw working directory to ensure strict double-pass chronological ordering (0001 to X) before any structural changes occur.
+    Bash
+
+    python3 src/renumberFiles.py -s /path/to/raw_working_folder
+
+    resizeTiff.py Standardize the newly renumbered files onto your uniform 3300 x 6600 canvas.
+    Bash
+
+    python3 src/resizeTiff.py -s /path/to/raw_working_folder -d /path/to/resized_folder
+
+    magickTiff.py (Pass 1 - Enhancements) Execute your first ImageMagick pass for level adjustments and sharpening. Route these explicitly to your primary magicked workspace directory.
+    Bash
+
+    python3 src/magickTiff.py -s /path/to/resized_folder -d /path/to/Roll0001-magicked
+
+    magickTiff.py (Pass 2 - Final Tuning/Compression) Run the script a second time using the results of your first pass as the new source inputs. Route this delivery layer to your compressed workspace directory.
+    Bash
+
+    python3 src/magickTiff.py -s /path/to/Roll0001-magicked -d /path/to/Roll0001-compressed
+
+    grayscale.py Branch off from your first enhanced pass to generate your preservation grayscale copies, using Roll0001-magicked as the source input.
+    Bash
+
+    python3 src/grayscale.py -s /path/to/Roll0001-magicked -d /path/to/Roll0001-grayscale
+
+    combineTiff2PDF.py Compile the final ordered TIFF sets from your second compressed pass into finished documents. Assign the explicit publication-ready naming schema.
+    Bash
+
+    python3 src/combineTiff2PDF.py -s /path/to/Roll0001-compressed -d "/path/to/SCPL GEORGETOWN NEWS GRAPHIC MMMYYYY - MMMYYYY"
+
+Note: Depending on your specific client delivery specs, removeRoll#.py may be optional if your final path structures do not require post-compile filename stripping.
+Architectural Notes & Best Practices
+
+    Path Normalization: All scripts utilize os.path.normpath internally. You can safely copy and paste Windows backslashes (\) or POSIX forward slashes (/) directly into CLI prompts without encountering pathing errors.
+
+    I/O Bottlenecks & Concurrency: When managing memory-heavy operations or single-threaded consolidation tasks (like combineTiff2PDF.py), run operations at the subfolder level (2 to 4 folders concurrently). Avoid setting multi-core parallel processing values too high on a single folder, as this can cause drive thrashing and drop throughput.
+
+    Data Protection Policy: Always attempt to provide separate -s and -d paths during production operations. Running actions in-place should only be executed once backup images have been secured offsite.
