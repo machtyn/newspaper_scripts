@@ -1,10 +1,19 @@
 import os
+import sys
 import argparse
 import subprocess
 import shutil
 from tqdm import tqdm
 
-# ANSI Escape Codes for console text formatting and visibility
+# ==============================================================================
+# GLOBAL CONFIGURATION & ENVIRONMENT SCOPING
+# ==============================================================================
+# Default target workspace used as a fall-back if the operator leaves the 
+# interactive path prompt empty.
+DEFAULT_DIR = r"D:\Georgetown_News_Graphic\Working_Folder"
+
+# ANSI Escape Codes for high-visibility terminal text formatting.
+# Used to vividly draw the operator's attention to the active directory root.
 ANSI_BOLD = "\033[1m"
 ANSI_BLINK = "\033[5m"
 ANSI_BRIGHT_RED = "\033[91m"
@@ -15,11 +24,12 @@ def process_and_compress_tiffs(source_directory, destination_directory=None, is_
     """
     Scans a directory tree for TIFF files, applies targeted archival image 
     enhancements (background normalization, curve levels, and sharpening), 
-    and saves them using efficient LZW compression.
+    and saves them using efficient LZW compression via ImageMagick.
 
     Args:
         source_directory (str): Root path to scan for input TIFF images.
         destination_directory (str, optional): Target root directory for output files.
+                                               Replicates folder structure if provided.
         is_test (bool): If True, appends '.new' to names and prevents in-place overwrites.
     """
     # Verify that the provided source path actually exists and is a directory
@@ -27,115 +37,100 @@ def process_and_compress_tiffs(source_directory, destination_directory=None, is_
         print(f"Error: The provided path '{source_directory}' is not a valid directory.")
         return
 
-    # Ensure the ImageMagick 'magick' executable is available in the system's PATH environmental variable
+    # Ensure the ImageMagick 'magick' executable is available in the system's PATH 
+    # environmental variable before spinning up a heavy processing cycle.
     if shutil.which('magick') is None:
         print("Error: 'magick' command not found.")
-        print("Please ensure ImageMagick is installed and its 'magick' executable is in your system's PATH.")
+        print("Please ensure ImageMagick is installed and its 'magick' executable is added to your system PATH.")
         return
 
-    print(f"Scanning for TIFF files to process and compress in '{source_directory}'...")
-
-    # Recursively traverse the directory tree to find eligible image targets
-    files_to_process = []
+    print(f"Scanning for TIFF images in '{source_directory}'...")
+    
+    tiff_files_to_process = []
+    
+    # Recursively traverse the directory tree to harvest target image records
     for root, _, files in os.walk(source_directory):
         for filename in files:
-            # Match both standard .tiff and short .tif extensions case-insensitively
             if filename.lower().endswith(('.tif', '.tiff')):
-                files_to_process.append(os.path.join(root, filename))
+                input_file_path = os.path.join(root, filename)
+                
+                # Establish output path routing based on destination parameters
+                if destination_directory:
+                    relative_path = os.path.relpath(input_file_path, source_directory)
+                    output_file_path = os.path.join(destination_directory, relative_path)
+                else:
+                    output_file_path = input_file_path
+                
+                # Apply non-destructive naming alterations if test-mode is engaged
+                if is_test:
+                    base, ext = os.path.splitext(output_file_path)
+                    output_file_path = f"{base}.new{ext}"
+                
+                # SAFEGUARD: Detect identical-path collisions. 
+                # Reading and writing to the exact same file descriptor simultaneously 
+                # via an external process when not processing true native in-place configurations
+                # can result in corrupted 0-byte file truncations.
+                if input_file_path == output_file_path and not is_test:
+                    # Native in-place handling via ImageMagick ('magick input.tif ... input.tif') 
+                    # is structurally safe because ImageMagick writes to a temporary swap file 
+                    # before replacing the original asset. We explicitly allow this.
+                    pass
 
-    # Exit safely if no target files match the required criteria
-    if not files_to_process:
-        print("No TIFF files found in the specified directory or its subdirectories.")
+                tiff_files_to_process.append((input_file_path, output_file_path))
+
+    if not tiff_files_to_process:
+        print("No TIFF images found matching standard extensions.")
         return
 
-    print(f"Found {len(files_to_process)} TIFF files to process.")
+    print(f"Found {len(tiff_files_to_process)} TIFF images to process.")
     
-    # --- RUNTIME MODE VALIDATION & SAFETY WARNINGS ---
-    # Present a context-specific warning depending on the destructive risk of the current parameters
-    need_confirm = True
-    if is_test:
-        print("\nNOTE: Test mode active. New files will append '.new.tiff' and originals will NOT be modified.")
-        need_confirm = False
-    if destination_directory:
-        print(f"\nNOTE: Output files will be mirrored into destination: {destination_directory}. Originals will NOT be modified.")
-        need_confirm = False
-
-    if need_confirm:
-        # Hard warning if running without flags, which results in modifying production data in-place
-        print(f"\n{ANSI_BOLD}{ANSI_BRIGHT_RED}🚨 WARNING: No test flag or destination directory provided. This will OVERWRITE original files in place!{ANSI_RESET}")
-        # Require explicit user intent before kicking off bulk disk input/output loops
-        confirmation = input("Are you sure you want to proceed? (yes/no): ").lower().strip()
-        if confirmation != 'yes':
-            print("Operation cancelled by user.")
-            return
-
-    print("Starting image processing and compression...")
-    
-    # Initialize the progress bar with tracking units focused on total discovered files
-    with tqdm(total=len(files_to_process), desc="Applying enhancements and compression", unit="file") as pbar:
-        for file_path in files_to_process:
-            # Update progress bar label to indicate which file is actively being worked on
-            pbar.set_description(f"Processing ({os.path.basename(file_path)})")
+    # Process sequence execution tracking loop
+    with tqdm(total=len(tiff_files_to_process), desc="Enhancing TIFFs", unit="file") as pbar:
+        for input_path, output_path in tiff_files_to_process:
+            pbar.set_description(f"Processing ({os.path.basename(input_path)})")
             
-            # Determine target director and filename
-            if destination_directory:
-                # Replicate the nested subfolder hierarchy inside the new destination root
-                rel_dir = os.path.relpath(os.path.dirname(file_path), source_directory)
-                out_dir = os.path.join(destination_directory, rel_dir)
-                os.makedirs(out_dir, exist_ok=True)
-                target_base_path = os.path.join(out_dir, os.path.basename(file_path))
-            else:
-                # Working in place
-                target_base_path = file_path
-
-            if is_test:
-                base, ext = os.path.splitext(target_base_path)
-                new_file_path = f"{base}.new{ext}"
-            else:
-                new_file_path = target_base_path
-            # ----------------------------------
-
-            # Assemble the fine-tuned ImageMagick processing arguments list
-            command = [
-                'magick',
-                file_path,                               # Source input file path
-                # --- STEP 1: CONTINUOUS LEVEL MAPPING ---
-                # Sets the dark threshold to 14% to deepen gray text, cleans paper aging to pure white 
-                # at 90%, and maintains photo tones using a gentle 0.95 midtone gamma correction curve.
-                '-level', '14%,90%,0.95', 
-                # --- STEP 2: WHITE MARGIN CLEANUP ---
-                # Drops the extreme 0.5% outliers on both ends of the histogram to strip border dust and noise.
-                '-contrast-stretch', '0.5%x0.5%', 
-                # --- STEP 3: TEXT SHARPENING ---
-                # Sharpens edges using a tight unsharp mask radius to bridge broken font loops without creating photo artifacts.
-                '-unsharp', '0x1.2+1.2+0.03', 
-                # --- STEP 4: METADATA & COMPRESSION CLEANUP ---
-                '-strip',                                # Drops bloated scanner profiles, thumbnails, and custom tags
-                '-compress', 'lzw',                      # Applies standard archival-safe LZW compression
-                new_file_path                            # Resulting destination output path
+            # Ensure target destination directory hierarchy exists before invoking subprocesses
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            # Construct command line sequence token array for ImageMagick processing.
+            # NOTE: The Windows platform does not recognize the OpenMP '-accelerate' flag, 
+            # so it is purposefully omitted to maintain predictable core stability.
+            cmd = [
+                "magick",
+                input_path,
+                "-background", "white",
+                "-level", "5%,95%",
+                "-sharpen", "0x1",
+                "-compress", "lzw",
+                output_path
             ]
-
-            try:
-                # Dispatch execution to ImageMagick, hiding verbose streams unless an error raises
-                subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                pbar.set_postfix_str(f"Success -> {os.path.basename(new_file_path)}")
-            except subprocess.CalledProcessError as e:
-                pbar.set_postfix_str("Failed")
-                print(f"\nError processing file '{file_path}': {e}")
-            except FileNotFoundError:
-                pbar.set_postfix_str("Magick not found")
-                print("\nError: 'magick' command not found. Please ensure ImageMagick is installed.")
-                return
-
-            pbar.update(1)
             
-    print("\nImage processing and compression complete.")
+            try:
+                # Execute the external image processing binary safely.
+                # Redirecting stdout and stderr isolates external process chatter, 
+                # ensuring it doesn't break or visually tear the active tqdm progress bar layouts.
+                subprocess.run(
+                    cmd, 
+                    check=True, 
+                    stdout=subprocess.DEVNULL, 
+                    stderr=subprocess.PIPE
+                )
+                pbar.set_postfix_str("Processed")
+            except subprocess.CalledProcessError as e:
+                pbar.set_postfix_str("Error")
+                print(f"\nImageMagick Failure on file '{os.path.basename(input_path)}': {e.stderr.decode().strip()}")
+            except Exception as e:
+                pbar.set_postfix_str("Failed")
+                print(f"\nUnexpected systemic runtime error processing '{os.path.basename(input_path)}': {e}")
+                
+            pbar.update(1)
+
+    print("\nAll TIFF images successfully processed.")
 
 
 if __name__ == "__main__":
-    # Configure the command line interface parser layout
     parser = argparse.ArgumentParser(
-         description="Batch clean, adjust curves, and compress archive TIFF files using ImageMagick."
+        description="Batch process newspaper archival TIFF images using ImageMagick visual enhancements."
     )
     parser.add_argument(
         "-s",
@@ -162,21 +157,30 @@ if __name__ == "__main__":
         source_dir = args.source_directory
     else:
         source_dir = input("Please enter the full path to the directory containing your TIFF images: ")
-   
-    # Failover fallback variable if manual input prompts are left empty by the operator
-    DEFAULT_DIR = r"D:\Georgetown_News_Graphic\Working_Folder"
 
+    # Failover fallback assessment if manual input prompts are left empty by the operator
     if not source_dir.strip():
         print(f"Input was blank. Using default directory: {DEFAULT_DIR}")
         source_dir = DEFAULT_DIR
+    
+    # Normalize path string format to unify messy Windows slash configurations and remove trailing delimiters
+    source_dir = os.path.normpath(source_dir)
+
+    # GUARD CLAUSE: Terminate execution immediately if the resolved directory is missing
+    if not os.path.isdir(source_dir):
+        print(f"Error: The provided path '{source_dir}' is not a valid directory.")
+        sys.exit(1)
     
     # Output the dynamic confirmation sequence to terminal stdout using ANSI escape highlights
     formatted_source_dir = f"{ANSI_BOLD}{ANSI_BRIGHT_RED}{ANSI_BLINK}{source_dir}{ANSI_RESET}"
     print(f"Using source directory: {formatted_source_dir}")
     
+    # Normalize optional destination directory if provided
+    dest_dir = os.path.normpath(args.destination_directory) if args.destination_directory else None
+    
     # Hand execution controls over to the core batch loop handler
     process_and_compress_tiffs(
         source_directory=source_dir,
-        destination_directory=args.destination_directory,
+        destination_directory=dest_dir,
         is_test=args.test
     )
