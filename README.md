@@ -67,6 +67,8 @@ magick --version
 
 ## Scripts
 
+All scripts are located in the `src/` directory.
+
 ### 1. **combineTiff2PDF.py**
 Converts directories containing TIFF images into single PDF files.
 
@@ -79,7 +81,7 @@ Converts directories containing TIFF images into single PDF files.
 
 **Usage:**
 ```bash
-python3 combineTiff2PDF.py
+python3 src/combineTiff2PDF.py
 # Prompts for root directory path
 ```
 
@@ -87,7 +89,7 @@ python3 combineTiff2PDF.py
 
 ---
 
-### 3. **grayscale.py**
+### 2. **grayscale.py**
 Converts color TIFF images to grayscale while preserving DPI information.
 
 **Features:**
@@ -99,7 +101,7 @@ Converts color TIFF images to grayscale while preserving DPI information.
 
 **Usage:**
 ```bash
-python3 grayscale.py
+python3 src/grayscale.py
 # Prompts for Color root directory path
 # Creates Grayscale directory at same parent level
 ```
@@ -108,7 +110,7 @@ python3 grayscale.py
 
 ---
 
-### 4. **removeRoll#.py**
+### 3. **removeRoll#.py**
 Removes "Roll ####" prefixes from PDF filenames.
 
 **Features:**
@@ -120,7 +122,7 @@ Removes "Roll ####" prefixes from PDF filenames.
 
 **Usage:**
 ```bash
-python3 removeRoll#.py --target_dir C:\path\to\files
+python3 src/removeRoll#.py --target_dir C:\path\to\files
 # Or without arguments for interactive prompt
 ```
 
@@ -128,7 +130,7 @@ python3 removeRoll#.py --target_dir C:\path\to\files
 
 ---
 
-### 5. **renameDate.py**
+### 4. **renameDate.py**
 Batch renames TIFF files by replacing date strings in filenames.
 
 **Features:**
@@ -140,7 +142,7 @@ Batch renames TIFF files by replacing date strings in filenames.
 
 **Usage:**
 ```bash
-python3 renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
+python3 src/renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
 # Or with partial/no arguments for interactive prompts
 ```
 
@@ -148,7 +150,7 @@ python3 renameDate.py -old_date 20250520 -new_date 20250523 -directory C:\path
 
 ---
 
-### 6. **renumberFiles.py**
+### 5. **renumberFiles.py**
 Performs double-pass sequential renumbering of files in folders.
 
 **Features:**
@@ -162,8 +164,8 @@ Performs double-pass sequential renumbering of files in folders.
 
 **Usage:**
 ```bash
-python3 renumberFiles.py -d C:\path\to\files
-# Or: python3 renumberFiles.py --source_dir C:\path\to\files
+python3 src/renumberFiles.py -d C:\path\to\files
+# Or: python3 src/renumberFiles.py --source_dir C:\path\to\files
 # Interactive prompt if directory not provided
 ```
 
@@ -171,7 +173,7 @@ python3 renumberFiles.py -d C:\path\to\files
 
 ---
 
-### 7. **resizeTiff.py**
+### 6. **resizeTiff.py**
 Resizes TIFF images to target dimensions with padding and aspect ratio preservation.
 
 **Features:**
@@ -184,8 +186,8 @@ Resizes TIFF images to target dimensions with padding and aspect ratio preservat
 
 **Usage:**
 ```bash
-python3 resizeTiff.py -d C:\path\to\tiff\files
-# Or: python3 resizeTiff.py --directory C:\path\to\tiff\files
+python3 src/resizeTiff.py -d C:\path\to\tiff\files
+# Or: python3 src/resizeTiff.py --directory C:\path\to\tiff\files
 # Interactive prompt if directory not provided
 ```
 
@@ -193,7 +195,7 @@ python3 resizeTiff.py -d C:\path\to\tiff\files
 
 ---
 
-### 8. **splitTiff.py**
+### 7. **splitTiff.py**
 Splits multi-page TIFF files into individual pages using ImageMagick.
 
 **Features:**
@@ -206,7 +208,7 @@ Splits multi-page TIFF files into individual pages using ImageMagick.
 
 **Usage:**
 ```bash
-python3 splitTiff.py
+python3 src/splitTiff.py
 # Prompts for starting directory path
 ```
 
@@ -214,18 +216,22 @@ python3 splitTiff.py
 
 ---
 
-### 9. **magickTiff.py**
-Applies image enhancements and LZW compression to TIFF files.
+### 8. **magickTiff.py**
+Applies sophisticated image enhancements and LZW compression to TIFF files.
 
 **Features:**
 - Creates new `.new.tiff` files (non-destructive)
 - Preserves original files
+- Applies continuous level mapping for smooth background-to-white clipping
+- White margin cleanup for absolute brightness values
+- Text sharpening using unsharp masking
+- LZW compression for efficient file storage
 - Progress tracking with tqdm
 - User confirmation before processing
 
 **Usage:**
 ```bash
-python3 magickTiff.py
+python3 src/magickTiff.py
 # Prompts for directory (or press Enter for default)
 ```
 
@@ -237,7 +243,7 @@ python3 magickTiff.py
 
 - **Pillow (PIL)**: Image processing (grayscale.py, combineTiff2PDF.py, resizeTiff.py)
 - **tqdm**: Progress bars (all scripts)
-- **ImageMagick**: Command-line image manipulation (compressTiffLZW.py, splitTiff.py, test_magick.py)
+- **ImageMagick**: Command-line image manipulation (splitTiff.py, magickTiff.py)
   - Ensure `magick` command is in system PATH
   - Windows: Download from [ImageMagick.org](https://imagemagick.org)
 
@@ -245,7 +251,7 @@ python3 magickTiff.py
 
 1. **Input**: Original color TIFF files
 2. **grayscale.py**: Convert to grayscale
-3. **compressTiffLZW.py** or **test_magick.py**: Enhance and compress
+3. **magickTiff.py**: Enhance and compress
 4. **splitTiff.py**: Split multi-page TIFFs if needed
 5. **renumberFiles.py**: Ensure sequential numbering
 6. **combineTiff2PDF.py**: Generate PDFs from TIFF collections
@@ -257,6 +263,7 @@ python3 magickTiff.py
 - File overwrite protection is implemented where appropriate
 - Progress bars are shown for long-running operations
 - ImageMagick-dependent scripts require the `magick` command in PATH
+- All scripts are located in the `src/` directory
 
 ## Author Notes
 
